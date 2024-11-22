@@ -50,16 +50,23 @@ class Model(nn.Module):
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         # Instance Normalization
+        # B V L
         means = x_enc.mean(1, keepdim=True).detach()
         x_enc = x_enc - means
         stdev = torch.sqrt(
             torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
         x_enc /= stdev
-
+        
         # do patching and embedding
         x_enc = x_enc.permute(0, 2, 1)
         # u: [bs * nvars, patch_num, d_model]
+        # B V N E
+            # V: num of channels
+            # N: num of patches    N= ⌊(L−P )/S ⌋ + 2, patch length P and stride S
+            # E: d model
         enc_out, n_vars = self.patch_embedding(x_enc)
+        
+        
         enc_out = self.encoder(enc_out)
         enc_out = torch.reshape(
             enc_out, (-1, n_vars, enc_out.shape[-2], enc_out.shape[-1]))
