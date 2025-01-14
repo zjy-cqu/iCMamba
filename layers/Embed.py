@@ -55,6 +55,8 @@ class PatchEmbedding(nn.Module):
         # Input encoding
         x = self.value_embedding(x) + self.position_embedding(x)
 
+        print(x.shape)   # 输出张量的形状
+        print(x.stride())  # 输出张量的步长
         return self.dropout(x), n_vars
 
 
@@ -70,7 +72,9 @@ class TokenEmbedding(nn.Module):
                     m.weight, mode='fan_in', nonlinearity='leaky_relu')
 
     def forward(self, x):
+        # print("before token embedding:", x.shape)
         x = self.tokenConv(x.permute(0, 2, 1)).transpose(1, 2)
+        # print("after token embedding:", x.shape)
         return x
 
 
@@ -165,13 +169,13 @@ class DataEmbedding_inverted(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, x_mark):
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)      # [64, 96, 7] -> [64, 7, 96]
         # x: [Batch Variate Time]
         if x_mark is None:
             x = self.value_embedding(x)
         else:
             x = self.value_embedding(torch.cat([x, x_mark.permute(0, 2, 1)], 1))
-        # x: [Batch Variate d_model]
+        # x: [Batch Variate d_model] # [64, 11, 128]
         return self.dropout(x)
 
 

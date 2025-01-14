@@ -56,7 +56,7 @@ python -u run.py \
   --max \
   --reduction 8 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done
@@ -104,7 +104,7 @@ python -u run.py \
   --max \
   --reduction 8 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done
@@ -151,7 +151,7 @@ python -u run.py \
   --max \
   --reduction 8 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done
@@ -199,7 +199,7 @@ python -u run.py \
   --max \
   --reduction 8 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/traffic/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done

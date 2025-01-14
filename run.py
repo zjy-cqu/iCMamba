@@ -98,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('--patch_num', type=int, default=32)
     parser.add_argument('--d_state', type=int, default=16)
     parser.add_argument('--d_conv', type=int, default=4)
+    parser.add_argument('--expand', type=int, default=2)
     parser.add_argument('--dt_min', type=float, default=0.001)
     parser.add_argument('--dt_init', type=str, default='random', help='random or constant')
     parser.add_argument('--dt_max', type=float, default=0.1)

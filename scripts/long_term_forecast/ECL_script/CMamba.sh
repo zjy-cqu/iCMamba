@@ -57,7 +57,7 @@ python -u run.py \
   --max \
   --reduction 4 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done
@@ -104,7 +104,7 @@ python -u run.py \
   --max \
   --reduction 4 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done
@@ -152,7 +152,7 @@ python -u run.py \
   --max \
   --reduction 4 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done
@@ -200,7 +200,7 @@ python -u run.py \
   --max \
   --reduction 4 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'_'$pred_len.txt
+  --itr 1 | tee -a ./log/CMamba/ecl/$seq_len'__mamba2_'$pred_len.txt
 done
 done
 done

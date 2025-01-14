@@ -5,14 +5,15 @@ import torch.nn.functional as F
 
 from layers.Pscan import pscan
 from layers.GDDMLP import GDDMLP
-
+from mamba_ssm import Mamba
+# from mamba_ssm import Mamba2
+from layers.SelfAttention_Family import AttentionLayer, FullAttention
 
 class CMambaEncoder(nn.Module):
     def __init__(self, configs):
         super().__init__()
 
         self.configs = configs
-
         self.layers = nn.ModuleList([CMambaBlock(configs) for _ in range(configs.e_layers)])
 
     def forward(self, x):
@@ -32,30 +33,42 @@ class CMambaBlock(nn.Module):
         self.mixer = MambaBlock(configs)
         self.norm = RMSNorm(configs.d_model)
 
-        self.gddmlp = configs.gddmlp
-        if self.gddmlp:
-            print("Insert GDDMLP")
-            self.GDDMLP = GDDMLP(configs.c_out, configs.reduction, 
-                                                 configs.avg, configs.max)
+        # self.gddmlp = configs.gddmlp
+        # if self.gddmlp:
+        #     print("Insert GDDMLP")
+        #     self.GDDMLP = GDDMLP(configs.c_out, configs.reduction, 
+        #                                          configs.avg, configs.max)
         self.dropout = nn.Dropout(configs.dropout)
         self.configs = configs
+        self.attention = AttentionLayer(
+            FullAttention(False, 
+                          configs.factor, 
+                          attention_dropout=configs.dropout, output_attention=False),
+            d_model=configs.d_model,
+            n_heads=configs.n_heads
+        )
 
     def forward(self, x):
         # x : [bs * nvars, patch_num, d_model]
 
         # output : [bs * nvars, patch_num, d_model]
-
-        output = self.mixer(self.norm(x)) 
-
-        if self.gddmlp:
-            # output : [bs, nvars, patch_num, d_model]
-            output = self.GDDMLP(output.reshape(-1, self.configs.c_out, 
-                                                          output.shape[-2], output.shape[-1]))
-            # output : [bs * nvars, patch_num, d_model]
-            output = output.reshape(-1, output.shape[-2], output.shape[-1])
+        # print(x.shape)   # 输出张量的形状
+        # print(x.stride())  # 输出张量的步长
+        # x = x.contiguous()
+        # print(x.shape)   # 输出张量的形状
+        # print(x.stride())  # 输出张量的步长
+        output = self.mixer(x)  # [64, 11, 128]
         output = self.dropout(output)
-        output += x
-        return output
+        new_x, _ = self.attention(output, output, output, attn_mask=None)
+        # if self.gddmlp:
+        #     # output : [bs, nvars, patch_num, d_model]
+        #     output = self.GDDMLP(output.reshape(-1, self.configs.c_out, 
+        #                                                   output.shape[-2], output.shape[-1]))
+        #     # output : [bs * nvars, patch_num, d_model]
+        #     output = output.reshape(-1, output.shape[-2], output.shape[-1])
+        new_x += output
+        # print("new_x.shape", new_x.shape)
+        return new_x
 
 class MambaBlock(nn.Module):
     """
@@ -94,7 +107,7 @@ class MambaBlock(nn.Module):
             self.dt_proj.bias.copy_(inv_dt)
 
         # S4D real initialization
-        A = torch.arange(1, configs.d_state + 1, dtype=torch.float32).unsqueeze(0)
+        A = torch.arange(1, configs.d_state + 1, dtype=torch.float32).unsqueeze(0) # shape: [1, configs.d_state]
 
         self.A_log = nn.Parameter(torch.log(A))
 
@@ -107,13 +120,13 @@ class MambaBlock(nn.Module):
         # y : [bs * nvars, patch_num, d_model]
 
         _, L, _ = x.shape
-
-        xz = self.in_proj(x) # [bs * nvars, patch_num, 2 * d_ff]
-        x, z = xz.chunk(2, dim=-1) # [bs * nvars, patch_num, d_ff], [bs * nvars, patch_num, d_ff]
-
+        # print("MambaBlock===============================")
+        xz = self.in_proj(x) # [bs * nvars, patch_num, 2 * d_ff]    # [64, 11, 256]
+        # 沿最后一个维度分割
+        x, z = xz.chunk(2, dim=-1) # [bs * nvars, patch_num, d_ff], [bs * nvars, patch_num, d_ff] # [64, 11, 128] # [64, 11, 128]
         # x branch
-        x = F.silu(x)
-        y = self.ssm(x)
+        x = F.silu(x)   # [64, 11, 128]
+        y = self.ssm(x) # [64, 11, 128]
 
         # z branch
         z = F.silu(z)
@@ -124,17 +137,19 @@ class MambaBlock(nn.Module):
         return output
     
     def ssm(self, x):
+        # print("=========SSM=========")
         # x : [bs * nvars, patch_num, d_ff]
 
         # y : [bs * nvars, patch_num, d_ff]
-
         A = -torch.exp(self.A_log.float()) # [d_ff, d_state]
+        # print("A:", A.shape)
 
         deltaBCD = self.x_proj(x) # [bs * nvars, patch_num, dt_rank + 2 * d_state + d_ff]
         # [bs * nvars, patch_num, dt_rank], [bs * nvars, patch_num, d_state], [bs * nvars, patch_num, d_state], [bs * nvars, patch_num, d_ff]
         delta, B, C, D = torch.split(deltaBCD, [self.configs.dt_rank, self.configs.d_state, self.configs.d_state, self.configs.d_ff], dim=-1)
         delta = F.softplus(self.dt_proj(delta)) # [bs * nvars, patch_num, d_ff]
-
+        # print(f"delta.shape: {delta.shape}, B.shape: {B.shape}, C.shape: {C.shape}, D.shape: {D.shape}")
+        # print("x.shape:", x.shape)
         if self.configs.pscan:
             y = self.selective_scan(x, delta, A, B, C, D)
         else:
@@ -154,15 +169,15 @@ class MambaBlock(nn.Module):
 
         deltaA = torch.exp(delta.unsqueeze(-1) * A) # [bs * nvars, patch_num, d_ff, d_state]
         deltaB = delta.unsqueeze(-1) * B.unsqueeze(2) # [bs * nvars, patch_num, d_ff, d_state]
-
+        # print(f"deltaA.shape: {deltaA.shape}, deltaB.shape: {deltaB.shape}")
         BX = deltaB * (x.unsqueeze(-1)) # [bs * nvars, patch_num, d_ff, d_state]
-        
+        # print(f"BX.shape: {BX.shape}")
         hs = pscan(deltaA, BX)
         # [bs * nvars, patch_num, d_ff, d_state] @ [bs * nvars, patch_num, d_state, 1] -> [bs * nvars, patch_num, d_ff]
         y = (hs @ C.unsqueeze(-1)).squeeze(3)
-
+        # print(f"y.shape: {y.shape}")
         y = y + D * x
-
+        # print(f"y.shape: {y.shape}")
         return y
     
     def selective_scan_seq(self, x, delta, A, B, C, D):
