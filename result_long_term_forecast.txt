@@ -133,3 +133,9 @@ mse:1.100364089012146, mae:0.8063733577728271
 long_term_forecast_CMamba_no_patch_ETTh1_96_96_CMamba_ETTh1_ftM_sl96_ll0_pl96_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0  
 mse:1.1100434064865112, mae:0.7962755560874939
 
+long_term_forecast_iMamba_no_patch_ETTh1_96_96_CMamba_ETTh1_ftM_sl96_ll0_pl96_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0  
+mse:1.2103872299194336, mae:0.8413421511650085
+
+long_term_forecast_iMamba_no_patch_ETTh1_96_336_CMamba_ETTh1_ftM_sl96_ll0_pl336_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0  
+mse:1.1518971920013428, mae:0.8076626658439636
+

@@ -4,12 +4,12 @@ if [ ! -d "./log" ]; then
     mkdir ./log
 fi
 
-if [ ! -d "./log/CMamba_no_patch" ]; then
-    mkdir ./log/CMamba_no_patch
+if [ ! -d "./log/iMamba_no_patch" ]; then
+    mkdir ./log/iMamba_no_patch
 fi
 
-if [ ! -d "./log/CMamba_no_patch/etth1" ]; then
-    mkdir ./log/CMamba_no_patch/etth1
+if [ ! -d "./log/iMamba_no_patch/etth1" ]; then
+    mkdir ./log/iMamba_no_patch/etth1
 fi
 
 model_name=CMamba
@@ -25,7 +25,7 @@ python -u run.py \
   --is_training 1 \
   --root_path ./dataset/ETT-small/ \
   --data_path ETTh1.csv \
-  --model_id CMamba_no_patch_ETTh1_$seq_len'_'$pred_len \
+  --model_id iMamba_no_patch_ETTh1_$seq_len'_'$pred_len \
   --model $model_name \
   --data ETTh1 \
   --features M \
@@ -56,7 +56,7 @@ python -u run.py \
   --max \
   --reduction 2 \
   --seed $seed \
-  --itr 1 | tee -a ./log/CMamba_no_patch/etth1/$seq_len'_mamba_'$pred_len.txt
+  --itr 1 | tee -a ./log/iMamba_no_patch/etth1/$seq_len'_mamba_'$pred_len.txt
 done
 done
 done

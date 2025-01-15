@@ -3,6 +3,8 @@ from torch import nn
 from layers.Embed import PatchEmbedding, DataEmbedding_inverted,DataEmbedding
 from layers.CMambaEncoder import CMambaEncoder, CMambaBlock
 from layers.SelfAttention_Family import FullAttention, AttentionLayer
+from mamba_ssm import Mamba
+from layers.iCMamba_EncDec import Encoder, EncoderLayer
 
 def init_weights(m):
     if type(m) == nn.Linear:
@@ -40,13 +42,37 @@ class Model(nn.Module):
         configs.patch_num = int((configs.seq_len - patch_len) / stride + 2)
         # self.patch_embedding = PatchEmbedding(
             # configs.d_model, patch_len, stride, padding, configs.head_dropout)
-        
         # self.enc_embedding = DataEmbedding_inverted(
-        #     configs.seq_len, configs.d_model, configs.embed, configs.freq, configs.dropout)
+        # #     configs.seq_len, configs.d_model, configs.embed, configs.freq, configs.dropout)
         self.enc_embedding = DataEmbedding(
             configs.enc_in, configs.d_model, configs.embed, configs.freq, configs.dropout)
         # Encoder
-        self.encoder = CMambaEncoder(configs)
+        self.cencoder = CMambaEncoder(configs)
+
+        self.output_attention = configs.output_attention
+        self.encoder = Encoder(
+            [
+                EncoderLayer(
+                    AttentionLayer(
+                        FullAttention(False, attention_dropout=0.1,
+                        output_attention=self.output_attention),
+                        d_model=configs.d_model,
+                        n_heads=configs.n_heads
+                    ),
+                    Mamba(
+                        d_model=configs.d_model,  # Model dimension d_model
+                        d_state=configs.d_state,  # SSM state expansion factor
+                        d_conv=4,  # Local convolution width
+                        expand=2,  # Block expansion factor)
+                    ),
+                    d_model=configs.d_model,
+                    d_ff=configs.d_ff,
+                    dropout=configs.dropout,
+                    activation=configs.activation
+                ) for _ in range(configs.e_layers)
+            ],
+            norm_layer=torch.nn.LayerNorm(configs.d_model)
+        )
         # Prediction Head
         self.head_nf = configs.d_model * configs.patch_num
         self.head = FlattenHead(configs.enc_in, self.head_nf, configs.pred_len,
@@ -61,31 +87,17 @@ class Model(nn.Module):
         x_enc = x_enc - means
         stdev = torch.sqrt(
             torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
-        x_enc /= stdev  # [64, 96, 7]
-                        # x_mark: [64, 96, 4]
+        x_enc /= stdev  # [bs, l, N]
+                        # x_mark: [bs, l, 4]
         _, _, D = x_enc.shape
-        # do patching and embedding
-        # x_enc = x_enc.permute(0, 2, 1)
-        # u: [bs * nvars, patch_num, d_model]
-        # B V N E
-            # V: num of channels
-            # N: num of patches    N= ⌊(L−P )/S ⌋ + 2, patch length P and stride S
-            # E: d model
-        # enc_out, n_vars = self.patch_embedding(x_enc, x_mark_enc)
-        enc_out = self.enc_embedding(x_enc, x_mark_enc) # [64, 11, 128]
-        enc_out = self.encoder(enc_out)                 # [64, 11, 128]
-        # enc_out = torch.reshape(
-        #     enc_out, (-1, n_vars, enc_out.shape[-2], enc_out.shape[-1]))
+
+        enc_out = self.enc_embedding(x_enc, x_mark_enc) 
+        # enc_out = self.cencoder(x_enc, x_mark_enc) # [bs, 11, 128]
+        # print("before ENCODER: enc_out.shape", enc_out.shape)
+        enc_out, attn = self.encoder(enc_out)                 # [64, 11, 128]
         # print("after ENCODER: enc_out.shape", enc_out.shape)
-        # enc_out: [bs, nvar, d_model, patch_num]
+
+
         dec_out = self.projector(enc_out).permute(0, 2, 1)[:, :, :D]    # # [64, 96, 7]  B L D
-        # print("after PROJECTOR: dec_out.shape", dec_out.shape)
-        # # Decoder
-        # # dec_out = self.head(enc_out)  # dec_out: [bs, nvars, target_window]
-        # dec_out = dec_out.permute(0, 2, 1)
-        # # De-Normalization
-        # dec_out = dec_out * \
-        #           (stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
-        # dec_out = dec_out + \
-        #           (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
+
         return dec_out
