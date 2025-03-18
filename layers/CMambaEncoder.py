@@ -33,42 +33,38 @@ class CMambaBlock(nn.Module):
         self.mixer = MambaBlock(configs)
         self.norm = RMSNorm(configs.d_model)
 
-        # self.gddmlp = configs.gddmlp
+        self.gddmlp = configs.gddmlp
         # if self.gddmlp:
         #     print("Insert GDDMLP")
         #     self.GDDMLP = GDDMLP(configs.c_out, configs.reduction, 
         #                                          configs.avg, configs.max)
+        self.conv1 = nn.Conv1d(in_channels=configs.d_model, out_channels=configs.d_ff, kernel_size=1)
+        self.conv2 = nn.Conv1d(in_channels=configs.d_ff, out_channels=configs.d_model, kernel_size=1)
+        self.activation = F.gelu
         self.dropout = nn.Dropout(configs.dropout)
         self.configs = configs
-        self.attention = AttentionLayer(
-            FullAttention(False, 
-                          configs.factor, 
-                          attention_dropout=configs.dropout, output_attention=False),
-            d_model=configs.d_model,
-            n_heads=configs.n_heads
-        )
 
     def forward(self, x):
-        # x : [bs * nvars, patch_num, d_model]
-
-        # output : [bs * nvars, patch_num, d_model]
-        # print(x.shape)   # 输出张量的形状
-        # print(x.stride())  # 输出张量的步长
-        # x = x.contiguous()
-        # print(x.shape)   # 输出张量的形状
-        # print(x.stride())  # 输出张量的步长
-        output = self.mixer(x)  # [64, 11, 128]
-        output = self.dropout(output)
-        new_x, _ = self.attention(output, output, output, attn_mask=None)
+        # x: [B*patch_num, L, d_model]
+        # print("CMambaBlock: x.shape", x.shape)
+        # output : [B*patch_num, L, d_model]
+        output = self.mixer(x)
+        # print("CMambaBlock: output.shape", output.shape)
         # if self.gddmlp:
+        #     print("GDDMLP==========")
         #     # output : [bs, nvars, patch_num, d_model]
         #     output = self.GDDMLP(output.reshape(-1, self.configs.c_out, 
         #                                                   output.shape[-2], output.shape[-1]))
         #     # output : [bs * nvars, patch_num, d_model]
         #     output = output.reshape(-1, output.shape[-2], output.shape[-1])
-        new_x += output
-        # print("new_x.shape", new_x.shape)
-        return new_x
+        output = self.dropout(output)
+        output += x
+
+        o = output.permute(0, 2, 1)        # [B*patch_num, d_model, L]
+        y = self.dropout(self.activation(self.conv1(o)))    # [B*patch_num, d_ff, L]
+        y = self.dropout(self.conv2(y))     # [B*patch_num, d_model, L]
+        y = y.permute(0, 2, 1)              # [B*patch_num, L, d_model]
+        return y
 
 class MambaBlock(nn.Module):
     """
@@ -115,18 +111,17 @@ class MambaBlock(nn.Module):
         self.out_proj = nn.Linear(configs.d_ff, configs.d_model, bias=configs.bias)
 
     def forward(self, x):
-        # x : [bs * nvars, patch_num, d_model]
-        
-        # y : [bs * nvars, patch_num, d_model]
+        # x : [B*patch_num, L, d_model]
+        # y : [B*patch_num, L, d_model]
 
         _, L, _ = x.shape
-        # print("MambaBlock===============================")
-        xz = self.in_proj(x) # [bs * nvars, patch_num, 2 * d_ff]    # [64, 11, 256]
+        # print("====================MambaBlock===============================")
+        xz = self.in_proj(x) # [B*patch_num, L, 2 * d_ff]
         # 沿最后一个维度分割
-        x, z = xz.chunk(2, dim=-1) # [bs * nvars, patch_num, d_ff], [bs * nvars, patch_num, d_ff] # [64, 11, 128] # [64, 11, 128]
+        x, z = xz.chunk(2, dim=-1) # [B*patch_num, L, d_ff], [B*patch_num, L, d_ff]
         # x branch
-        x = F.silu(x)   # [64, 11, 128]
-        y = self.ssm(x) # [64, 11, 128]
+        x = F.silu(x)
+        y = self.ssm(x)
 
         # z branch
         z = F.silu(z)
@@ -138,14 +133,14 @@ class MambaBlock(nn.Module):
     
     def ssm(self, x):
         # print("=========SSM=========")
-        # x : [bs * nvars, patch_num, d_ff]
+        # x : [B*patch_num, L, d_ff]
 
-        # y : [bs * nvars, patch_num, d_ff]
+        # y : [B*patch_num, L, d_ff]
         A = -torch.exp(self.A_log.float()) # [d_ff, d_state]
         # print("A:", A.shape)
 
-        deltaBCD = self.x_proj(x) # [bs * nvars, patch_num, dt_rank + 2 * d_state + d_ff]
-        # [bs * nvars, patch_num, dt_rank], [bs * nvars, patch_num, d_state], [bs * nvars, patch_num, d_state], [bs * nvars, patch_num, d_ff]
+        deltaBCD = self.x_proj(x) # [B*patch_num, L, dt_rank + 2 * d_state + d_ff]
+        # [B*patch_num, L, dt_rank], [B*patch_num, L, d_state], [B*patch_num, L, d_state], [B*patch_num, L, d_ff]
         delta, B, C, D = torch.split(deltaBCD, [self.configs.dt_rank, self.configs.d_state, self.configs.d_state, self.configs.d_ff], dim=-1)
         delta = F.softplus(self.dt_proj(delta)) # [bs * nvars, patch_num, d_ff]
         # print(f"delta.shape: {delta.shape}, B.shape: {B.shape}, C.shape: {C.shape}, D.shape: {D.shape}")
@@ -158,22 +153,22 @@ class MambaBlock(nn.Module):
         return y
     
     def selective_scan(self, x, delta, A, B, C, D):
-        # x : [bs * nvars, patch_num, d_ff]
-        # Δ : [bs * nvars, patch_num, d_ff]
+        # x : [B*patch_num, L, d_ff]
+        # Δ : [B*patch_num, L, d_ff]
         # A : [d_ff, d_state]
-        # B : [bs * nvars, patch_num, d_state]
-        # C : [bs * nvars, patch_num, d_state]
-        # D : [bs * nvars, patch_num, d_ff]
+        # B : [B*patch_num, L, d_state]
+        # C : [B*patch_num, L, d_state]
+        # D : [B*patch_num, L, d_ff]
 
-        # y : [bs * nvars, patch_num, d_ff]
+        # y : [B*patch_num, L, d_ff]
 
-        deltaA = torch.exp(delta.unsqueeze(-1) * A) # [bs * nvars, patch_num, d_ff, d_state]
-        deltaB = delta.unsqueeze(-1) * B.unsqueeze(2) # [bs * nvars, patch_num, d_ff, d_state]
+        deltaA = torch.exp(delta.unsqueeze(-1) * A) # [B*patch_num, L, d_ff, d_state]
+        deltaB = delta.unsqueeze(-1) * B.unsqueeze(2) # [B*patch_num, L, d_ff, d_state]
         # print(f"deltaA.shape: {deltaA.shape}, deltaB.shape: {deltaB.shape}")
-        BX = deltaB * (x.unsqueeze(-1)) # [bs * nvars, patch_num, d_ff, d_state]
+        BX = deltaB * (x.unsqueeze(-1)) # [B*patch_num, L, d_ff, d_state]
         # print(f"BX.shape: {BX.shape}")
         hs = pscan(deltaA, BX)
-        # [bs * nvars, patch_num, d_ff, d_state] @ [bs * nvars, patch_num, d_state, 1] -> [bs * nvars, patch_num, d_ff]
+        # [B*patch_num, L, d_ff, d_state] @ [B*patch_num, L, d_state, 1] ->[B*patch_num, L, d_ff]
         y = (hs @ C.unsqueeze(-1)).squeeze(3)
         # print(f"y.shape: {y.shape}")
         y = y + D * x

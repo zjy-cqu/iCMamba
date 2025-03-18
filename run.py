@@ -113,6 +113,9 @@ if __name__ == '__main__':
     parser.add_argument('--gddmlp', action='store_true', help='global data-dependent mlp', default=False)
     parser.add_argument('--channel_mixup', action='store_true', help='channel mixup', default=False)
     parser.add_argument('--sigma', type=float, default=1.0)
+    parser.add_argument('--patch_len', type=int, default=4)
+    parser.add_argument('--stride', type=int, default=2)
+
 
     args = parser.parse_args()
     random.seed(args.seed)

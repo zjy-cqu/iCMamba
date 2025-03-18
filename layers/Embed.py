@@ -54,10 +54,52 @@ class PatchEmbedding(nn.Module):
         x = torch.reshape(x, (x.shape[0] * x.shape[1], x.shape[2], x.shape[3]))
         # Input encoding
         x = self.value_embedding(x) + self.position_embedding(x)
-
-        print(x.shape)   # 输出张量的形状
-        print(x.stride())  # 输出张量的步长
         return self.dropout(x), n_vars
+
+class PatchEmbedding_inverted(nn.Module):
+    """
+    ReparamModule, similar to https://arxiv.org/pdf/2211.14730
+    """
+    def __init__(self, d_model, patch_len, stride, padding, dropout):
+        super(PatchEmbedding_inverted, self).__init__()
+        # Patching
+        self.patch_len = patch_len
+        self.stride = stride
+        self.padding_patch_layer = nn.ReplicationPad1d((0, padding))
+
+        # Backbone, Input encoding: projection of feature vectors onto a d-dim vector space
+        self.value_embedding = nn.Linear(patch_len, d_model, bias=False)
+
+        # Positional embedding
+        self.position_embedding = PositionalEmbedding(d_model)
+
+        # Residual dropout
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        '''
+        Input:  x = [B, N, L]
+        Output: x = [B * patch_num, L, d_model]
+        '''
+        B, N, L = x.shape
+        # print("============Patch============")
+        # print("0, x.shape:", x.shape)
+        x = self.padding_patch_layer(x.transpose(1, 2))  # 将变量维度 N 移到最后，方便填充
+        # print("1, x.shape:", x.shape)
+
+        # 在变量维度上分块(unfold指滑动窗口操作)
+        x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride) # [B, L, patch_num, patch_len]
+        patch_num = x.shape[2]
+        # print("2, x.shape:", x.shape)
+
+        # Step 3: Reshape 合并批量和分块维度
+        x = torch.reshape(x, (x.shape[0] * x.shape[2], x.shape[1], x.shape[3])) # [B*patch_num, L, patch_len]
+        # print("3, x.shape:", x.shape)
+        x = self.value_embedding(x)             # [B*patch_num, L, d_model]
+        x = x + self.position_embedding(x)      # [B*patch_num, L, d_model]
+        # print("4, x.shape:", x.shape)
+
+        return self.dropout(x), patch_num
 
 
 class TokenEmbedding(nn.Module):

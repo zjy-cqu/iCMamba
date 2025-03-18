@@ -1,0 +1,182 @@
+Args in experiment:
+[1mBasic Config[0m
+  Task Name:          long_term_forecast  Is Training:        1                   
+  Model ID:           iMamba_with_patch_ETTh1_96_336Model:              CMamba              
+
+[1mData Loader[0m
+  Data:               ETTh1               Root Path:          ./dataset/ETT-small/
+  Data Path:          ETTh1.csv           Features:           M                   
+  Target:             OT                  Freq:               h                   
+  Checkpoints:        ./checkpoints/      
+
+[1mForecasting Task[0m
+  Seq Len:            96                  Label Len:          0                   
+  Pred Len:           336                 Seasonal Patterns:  Monthly             
+  Inverse:            0                   
+
+[1mModel Parameters[0m
+  Top k:              5                   Num Kernels:        6                   
+  Enc In:             7                   Dec In:             7                   
+  C Out:              7                   d model:            128                 
+  n heads:            8                   e layers:           3                   
+  d layers:           1                   d FF:               128                 
+  Moving Avg:         25                  Factor:             3                   
+  Distil:             1                   Dropout:            0.1                 
+  Embed:              timeF               Activation:         gelu                
+  Output Attention:   0                   
+
+[1mRun Parameters[0m
+  Num Workers:        1                   Itr:                1                   
+  Train Epochs:       100                 Batch Size:         64                  
+  Patience:           3                   Learning Rate:      0.0005              
+  Des:                Exp                 Loss:               MAE                 
+  Lradj:              type3               Use Amp:            0                   
+
+[1mGPU[0m
+  Use GPU:            1                   GPU:                0                   
+  Use Multi GPU:      0                   Devices:            0,1,2,3             
+
+[1mDe-stationary Projector Params[0m
+  P Hidden Dims:      128, 128            P Hidden Layers:    2                   
+
+Use GPU: cuda:0
+>>>>>>>start training : long_term_forecast_iMamba_with_patch_ETTh1_96_336_CMamba_ETTh1_ftM_sl96_ll0_pl336_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0>>>>>>>>>>>>>>>>>>>>>>>>>>
+train 8209
+val 2545
+test 2545
+	iters: 100, epoch: 1 | loss: 0.7294970
+	speed: 0.0963s/iter; left time: 1223.4898s
+Epoch: 1 cost time: 12.218052387237549
+Epoch: 1, Steps: 128 | Train Loss: 0.7452143 Vali Loss: 115791.1989808 Test Loss: 0.4855332
+Validation loss decreased (inf --> 115791.198981).  Saving model ...
+Updating learning rate to 0.0005
+	iters: 100, epoch: 2 | loss: 0.7163099
+	speed: 0.1486s/iter; left time: 1868.5733s
+Epoch: 2 cost time: 11.746496200561523
+Epoch: 2, Steps: 128 | Train Loss: 2360602072711898.0000000 Vali Loss: 1035323594801.3062744 Test Loss: 0.4792868
+EarlyStopping counter: 1 out of 3
+Updating learning rate to 0.0005
+	iters: 100, epoch: 3 | loss: 0.6687010
+	speed: 0.1486s/iter; left time: 1849.1166s
+Epoch: 3 cost time: 11.7507963180542
+Epoch: 3, Steps: 128 | Train Loss: 16003.0663894 Vali Loss: 1199406534140.9499512 Test Loss: 0.4798759
+EarlyStopping counter: 2 out of 3
+Updating learning rate to 0.0005
+	iters: 100, epoch: 4 | loss: 0.6964315
+	speed: 0.1464s/iter; left time: 1802.6467s
+Epoch: 4 cost time: 11.534364461898804
+Epoch: 4, Steps: 128 | Train Loss: 1746.4338322 Vali Loss: 972927698185.4675293 Test Loss: 0.4788896
+EarlyStopping counter: 3 out of 3
+Early stopping
+>>>>>>>testing : long_term_forecast_iMamba_with_patch_ETTh1_96_336_CMamba_ETTh1_ftM_sl96_ll0_pl336_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+test 2545
+test shape: (2545, 336, 7) (2545, 336, 7)
+test shape: (2545, 336, 7) (2545, 336, 7)
+mse:0.5303267240524292, mae:0.48553282022476196
+Args in experiment:
+[1mBasic Config[0m
+  Task Name:          long_term_forecast  Is Training:        1                   
+  Model ID:           iMamba_with_patch_ETTh1_96_336Model:              CMamba              
+
+[1mData Loader[0m
+  Data:               ETTh1               Root Path:          ./dataset/ETT-small/
+  Data Path:          ETTh1.csv           Features:           M                   
+  Target:             OT                  Freq:               h                   
+  Checkpoints:        ./checkpoints/      
+
+[1mForecasting Task[0m
+  Seq Len:            96                  Label Len:          0                   
+  Pred Len:           336                 Seasonal Patterns:  Monthly             
+  Inverse:            0                   
+
+[1mModel Parameters[0m
+  Top k:              5                   Num Kernels:        6                   
+  Enc In:             7                   Dec In:             7                   
+  C Out:              7                   d model:            128                 
+  n heads:            8                   e layers:           3                   
+  d layers:           1                   d FF:               128                 
+  Moving Avg:         25                  Factor:             3                   
+  Distil:             1                   Dropout:            0.1                 
+  Embed:              timeF               Activation:         gelu                
+  Output Attention:   0                   
+
+[1mRun Parameters[0m
+  Num Workers:        1                   Itr:                1                   
+  Train Epochs:       100                 Batch Size:         64                  
+  Patience:           3                   Learning Rate:      0.0005              
+  Des:                Exp                 Loss:               MAE                 
+  Lradj:              type3               Use Amp:            0                   
+
+[1mGPU[0m
+  Use GPU:            1                   GPU:                0                   
+  Use Multi GPU:      0                   Devices:            0,1,2,3             
+
+[1mDe-stationary Projector Params[0m
+  P Hidden Dims:      128, 128            P Hidden Layers:    2                   
+
+Use GPU: cuda:0
+>>>>>>>start training : long_term_forecast_iMamba_with_patch_ETTh1_96_336_CMamba_ETTh1_ftM_sl96_ll0_pl336_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0>>>>>>>>>>>>>>>>>>>>>>>>>>
+train 8209
+val 2545
+test 2545
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+x_enc: torch.Size([64, 96, 7])x_mark_enc: torch.Size([64, 96, 4])x_dec: torch.Size([64, 336, 7])x_mark_dec: torch.Size([64, 336, 4])
+Args in experiment:
+[1mBasic Config[0m
+  Task Name:          long_term_forecast  Is Training:        1                   
+  Model ID:           iMamba_with_patch_ETTh1_96_336Model:              CMamba              
+
+[1mData Loader[0m
+  Data:               ETTh1               Root Path:          ./dataset/ETT-small/
+  Data Path:          ETTh1.csv           Features:           M                   
+  Target:             OT                  Freq:               h                   
+  Checkpoints:        ./checkpoints/      
+
+[1mForecasting Task[0m
+  Seq Len:            96                  Label Len:          0                   
+  Pred Len:           336                 Seasonal Patterns:  Monthly             
+  Inverse:            0                   
+
+[1mModel Parameters[0m
+  Top k:              5                   Num Kernels:        6                   
+  Enc In:             7                   Dec In:             7                   
+  C Out:              7                   d model:            128                 
+  n heads:            8                   e layers:           3                   
+  d layers:           1                   d FF:               128                 
+  Moving Avg:         25                  Factor:             3                   
+  Distil:             1                   Dropout:            0.1                 
+  Embed:              timeF               Activation:         gelu                
+  Output Attention:   0                   
+
+[1mRun Parameters[0m
+  Num Workers:        1                   Itr:                1                   
+  Train Epochs:       100                 Batch Size:         64                  
+  Patience:           3                   Learning Rate:      0.0005              
+  Des:                Exp                 Loss:               MAE                 
+  Lradj:              type3               Use Amp:            0                   
+
+[1mGPU[0m
+  Use GPU:            1                   GPU:                0                   
+  Use Multi GPU:      0                   Devices:            0,1,2,3             
+
+[1mDe-stationary Projector Params[0m
+  P Hidden Dims:      128, 128            P Hidden Layers:    2                   
+
+Use GPU: cuda:0
+>>>>>>>start training : long_term_forecast_iMamba_with_patch_ETTh1_96_336_CMamba_ETTh1_ftM_sl96_ll0_pl336_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0>>>>>>>>>>>>>>>>>>>>>>>>>>
+train 8209
+val 2545
+test 2545

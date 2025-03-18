@@ -1,0 +1,81 @@
+Args in experiment:
+[1mBasic Config[0m
+  Task Name:          long_term_forecast  Is Training:        1                   
+  Model ID:           iMamba_with_patch_ETTh1_96_720Model:              CMamba              
+
+[1mData Loader[0m
+  Data:               ETTh1               Root Path:          ./dataset/ETT-small/
+  Data Path:          ETTh1.csv           Features:           M                   
+  Target:             OT                  Freq:               h                   
+  Checkpoints:        ./checkpoints/      
+
+[1mForecasting Task[0m
+  Seq Len:            96                  Label Len:          0                   
+  Pred Len:           720                 Seasonal Patterns:  Monthly             
+  Inverse:            0                   
+
+[1mModel Parameters[0m
+  Top k:              5                   Num Kernels:        6                   
+  Enc In:             7                   Dec In:             7                   
+  C Out:              7                   d model:            128                 
+  n heads:            8                   e layers:           3                   
+  d layers:           1                   d FF:               128                 
+  Moving Avg:         25                  Factor:             3                   
+  Distil:             1                   Dropout:            0.1                 
+  Embed:              timeF               Activation:         gelu                
+  Output Attention:   0                   
+
+[1mRun Parameters[0m
+  Num Workers:        1                   Itr:                1                   
+  Train Epochs:       100                 Batch Size:         64                  
+  Patience:           3                   Learning Rate:      0.0005              
+  Des:                Exp                 Loss:               MAE                 
+  Lradj:              type3               Use Amp:            0                   
+
+[1mGPU[0m
+  Use GPU:            1                   GPU:                0                   
+  Use Multi GPU:      0                   Devices:            0,1,2,3             
+
+[1mDe-stationary Projector Params[0m
+  P Hidden Dims:      128, 128            P Hidden Layers:    2                   
+
+Use GPU: cuda:0
+>>>>>>>start training : long_term_forecast_iMamba_with_patch_ETTh1_96_720_CMamba_ETTh1_ftM_sl96_ll0_pl720_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0>>>>>>>>>>>>>>>>>>>>>>>>>>
+train 7825
+val 2161
+test 2161
+	iters: 100, epoch: 1 | loss: 0.7695054
+	speed: 0.0965s/iter; left time: 1167.8252s
+Epoch: 1 cost time: 11.692431688308716
+Epoch: 1, Steps: 122 | Train Loss: 0.8149810 Vali Loss: 76.9660016 Test Loss: 0.5021302
+Validation loss decreased (inf --> 76.966002).  Saving model ...
+Updating learning rate to 0.0005
+	iters: 100, epoch: 2 | loss: 0.7614087
+	speed: 0.1399s/iter; left time: 1675.5783s
+Epoch: 2 cost time: 11.2123703956604
+Epoch: 2, Steps: 122 | Train Loss: 0.7874941 Vali Loss: 0.8680731 Test Loss: 0.4840028
+Validation loss decreased (76.966002 --> 0.868073).  Saving model ...
+Updating learning rate to 0.0005
+	iters: 100, epoch: 3 | loss: 0.8265328
+	speed: 0.1412s/iter; left time: 1674.3926s
+Epoch: 3 cost time: 11.220590114593506
+Epoch: 3, Steps: 122 | Train Loss: 0.7719580 Vali Loss: 63251.3804711 Test Loss: 0.4837267
+EarlyStopping counter: 1 out of 3
+Updating learning rate to 0.0005
+	iters: 100, epoch: 4 | loss: 0.7407993
+	speed: 0.1408s/iter; left time: 1652.7319s
+Epoch: 4 cost time: 11.234251737594604
+Epoch: 4, Steps: 122 | Train Loss: 0.7676157 Vali Loss: 27186.8242632 Test Loss: 0.4801060
+EarlyStopping counter: 2 out of 3
+Updating learning rate to 0.00045000000000000004
+	iters: 100, epoch: 5 | loss: 0.7536260
+	speed: 0.1409s/iter; left time: 1635.9404s
+Epoch: 5 cost time: 11.226710557937622
+Epoch: 5, Steps: 122 | Train Loss: 11.1563645 Vali Loss: 6599044.0924517 Test Loss: 0.4789318
+EarlyStopping counter: 3 out of 3
+Early stopping
+>>>>>>>testing : long_term_forecast_iMamba_with_patch_ETTh1_96_720_CMamba_ETTh1_ftM_sl96_ll0_pl720_dm128_std1.0_el3_rd2_df128_fc3_ebtimeF_dtTrue_bs64_Exp_0<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+test 2161
+test shape: (2161, 720, 7) (2161, 720, 7)
+test shape: (2161, 720, 7) (2161, 720, 7)
+mse:0.5056137442588806, mae:0.48400285840034485

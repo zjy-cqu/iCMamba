@@ -146,8 +146,10 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                         train_loss.update(loss.item(), outputs.shape[0])
                 else:
                     if self.args.output_attention:
+                        # print(f'batched_x: {batch_x.shape}, batch_x_mark: {batch_x_mark.shape}, dec_inp: {dec_inp.shape}, batch_y_mark: {batch_y_mark.shape}')
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                     else:
+                        # print(f'batched_x: {batch_x.shape}, batch_x_mark: {batch_x_mark.shape}, dec_inp: {dec_inp.shape}, batch_y_mark: {batch_y_mark.shape}')
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
                     f_dim = -1 if self.args.features == 'MS' else 0
